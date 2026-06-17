@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HR Initiative Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1a2744;
+    --navy-mid: #243560;
+    --navy-light: #2e4480;
+    --slate: #4a5a7a;
+    --accent: #4f8ef7;
+    --accent-green: #34c98c;
+    --accent-amber: #f5a623;
+    --accent-red: #e85c5c;
+    --accent-blue: #5b9cf6;
+    --bg: #f0f3f9;
+    --bg-card: #ffffff;
+    --border: #dde3ef;
+    --text: #1a2744;
+    --text-muted: #7080a0;
+    --text-light: #a0aec0;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(26,39,68,0.09);
+    --shadow-deep: 0 8px 32px rgba(26,39,68,0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── SIDEBAR ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    background: var(--navy);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-logo .logo-label {
+    font-family: 'DM Serif Display', serif;
+    color: #fff;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .sidebar-logo .logo-sub {
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 10px 12px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: 2px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+  .nav-item.active { background: rgba(79,142,247,0.2); color: var(--accent); }
+
+  .nav-item .nav-icon {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar-footer {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.3);
+    font-size: 11px;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #3a7ef6; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--slate);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { background: var(--bg); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red);
+  }
+
+  .btn-danger:hover { background: #fdeaea; }
+
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── PAGE visibility ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── STAT CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent));
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'DM Serif Display', serif;
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 6px;
+  }
+
+  /* ── CHARTS ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .chart-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .chart-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .chart-card-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .chart-wrap { position: relative; }
+
+  /* ── RECENT TABLE ── */
+  .table-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .table-header-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 13px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f3f9;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: #fafbfe; }
+
+  /* ── STATUS BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-implemented { background: #e6f9f2; color: #1da370; }
+  .badge-development { background: #e8f0fe; color: #3a6fd6; }
+  .badge-canceled    { background: #fdeaea; color: #c0392b; }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .badge-implemented .badge-dot { background: #34c98c; }
+  .badge-development .badge-dot { background: var(--accent); }
+  .badge-canceled    .badge-dot { background: var(--accent-red); }
+
+  /* ── INITIATIVES PAGE ── */
+  .initiatives-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .initiatives-list-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .list-toolbar {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* ── FORM PANEL ── */
+  .form-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: sticky;
+    top: 80px;
+  }
+
+  .form-panel-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .form-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .form-body { padding: 20px; }
+
+  .form-group { margin-bottom: 16px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  input[type=text],
+  input[type=date],
+  select,
+  textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type=text]:focus,
+  input[type=date]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .form-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 18px 0;
+  }
+
+  .file-link-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .file-link-row input { flex: 1; }
+
+  .file-links-list { margin-bottom: 8px; }
+
+  .added-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    background: var(--bg);
+    border-radius: 6px;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .added-link a {
+    color: var(--accent);
+    text-decoration: none;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .added-link button {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  .added-link button:hover { color: var(--accent-red); }
+
+  /* initiative detail expand */
+  .initiative-row { cursor: pointer; }
+  .initiative-row:hover td { background: #f5f7fd; }
+  .initiative-detail-row { display: none; }
+  .initiative-detail-row.open { display: table-row; }
+  .initiative-detail-inner {
+    padding: 14px 16px 18px 32px;
+    background: #fafbfe;
+    font-size: 13px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    margin-bottom: 10px;
+  }
+
+  .detail-item-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .detail-item-value { font-size: 13px; color: var(--text); }
+
+  .detail-notes {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+
+  .detail-links { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .detail-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #e8f0fe;
+    color: var(--accent);
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .detail-links a:hover { background: var(--accent); color: #fff; }
+
+  .detail-actions { margin-top: 12px; display: flex; gap: 8px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 52px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state svg { opacity: 0.25; margin-bottom: 12px; }
+
+  .empty-state p { font-size: 14px; }
+
+  /* ── TOAST ── */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-deep);
+    animation: slideIn 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toast.success { background: #1a5c44; }
+  .toast.error   { background: #7a1f1f; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo .logo-label,
+    .sidebar-logo .logo-sub,
+    .nav-section-label,
+    .nav-item span,
+    .sidebar-footer { display: none; }
+    .main { margin-left: 60px; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .initiatives-layout { grid-template-columns: 1fr; }
+    .form-panel { position: static; }
+    .content { padding: 20px 16px; }
+  }
+
+  @media (max-width: 600px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 0 16px; }
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-label">HR Tracker</div>
+      <div class="logo-sub">Initiative Manager</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Menu</div>
+      <button class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </span>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="showPage('initiatives', this)">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </span>
+        <span>Initiatives</span>
+      </button>
+    </div>
+    <div class="sidebar-footer">v1.0 · Local storage</div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard Overview</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="showPage('initiatives', document.querySelectorAll('.nav-item')[1]); setTimeout(()=>focusForm(),100)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Initiative
+        </button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="content page active" id="page-dashboard">
+
+      <!-- Stat Cards -->
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card" style="--card-accent:#34c98c">
+          <div class="stat-label">Total Initiatives</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">All recorded</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#34c98c">
+          <div class="stat-label">Implemented</div>
+          <div class="stat-value" id="stat-implemented">0</div>
+          <div class="stat-sub" id="stat-implemented-pct">—</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#4f8ef7">
+          <div class="stat-label">In Development</div>
+          <div class="stat-value" id="stat-development">0</div>
+          <div class="stat-sub">Active pipeline</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#e85c5c">
+          <div class="stat-label">Canceled</div>
+          <div class="stat-value" id="stat-canceled">0</div>
+          <div class="stat-sub">Not pursued</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">Status Distribution</div>
+          <div class="chart-card-sub">Total vs. implemented initiatives</div>
+          <div class="chart-wrap" style="height:240px">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">Monthly Implementation</div>
+          <div class="chart-card-sub">Initiatives implemented by month (current year)</div>
+          <div class="chart-wrap" style="height:240px">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent initiatives table -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-header-title">Recent Initiatives</div>
+          <button class="btn btn-ghost" onclick="showPage('initiatives', document.querySelectorAll('.nav-item')[1])">View All</button>
+        </div>
+        <div id="recent-table-wrap">
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            <p>No initiatives yet. Add your first one!</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+    <!-- INITIATIVES PAGE -->
+    <div class="content page" id="page-initiatives">
+      <div class="initiatives-layout">
+
+        <!-- Left: list -->
+        <div class="initiatives-list-card">
+          <div class="list-toolbar">
+            <input class="search-input" id="search-input" type="text" placeholder="Search initiatives…" oninput="renderList()"/>
+            <select class="filter-select" id="filter-status" onchange="renderList()">
+              <option value="">All statuses</option>
+              <option value="implemented">Implemented</option>
+              <option value="development">In Development</option>
+              <option value="canceled">Canceled</option>
+            </select>
+            <select class="filter-select" id="filter-schedule" onchange="renderList()">
+              <option value="">All schedules</option>
+              <option value="one-time">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="bi-annually">Bi-annually</option>
+              <option value="annually">Annually</option>
+            </select>
+          </div>
+          <div id="initiatives-table-wrap">
+            <div class="empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              <p>No initiatives yet. Use the form →</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: form -->
+        <div class="form-panel" id="initiative-form-panel">
+          <div class="form-panel-header">
+            <div class="form-panel-title" id="form-panel-title">New Initiative</div>
+            <button class="btn btn-ghost" id="form-cancel-btn" style="display:none;padding:5px 10px;font-size:12px" onclick="cancelEdit()">Cancel</button>
+          </div>
+          <div class="form-body">
+
+            <div class="form-group">
+              <label for="f-name">Initiative Name *</label>
+              <input type="text" id="f-name" placeholder="e.g. Employee Wellness Program"/>
+            </div>
+
+            <div class="form-group">
+              <label for="f-department">Department / Owner</label>
+              <input type="text" id="f-department" placeholder="e.g. HR, Finance…"/>
+            </div>
+
+            <div class="form-group">
+              <label for="f-status">Status *</label>
+              <select id="f-status">
+                <option value="development">In Development</option>
+                <option value="implemented">Implemented</option>
+                <option value="canceled">Canceled</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="f-schedule">Schedule</label>
+              <select id="f-schedule">
+                <option value="one-time">One-time</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="bi-annually">Bi-annually</option>
+                <option value="annually">Annually</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="date-group">
+              <label for="f-date">Date Implemented</label>
+              <input type="date" id="f-date"/>
+            </div>
+
+            <div class="form-group">
+              <label for="f-start">Start Date</label>
+              <input type="date" id="f-start"/>
+            </div>
+
+            <hr class="form-divider"/>
+
+            <div class="form-group">
+              <label for="f-notes">Notes</label>
+              <textarea id="f-notes" placeholder="Context, goals, outcomes…"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Linked Files / URLs</label>
+              <div class="file-links-list" id="file-links-list"></div>
+              <div class="file-link-row">
+                <input type="text" id="f-link-label" placeholder="Label (optional)"/>
+                <input type="text" id="f-link-url" placeholder="https://…"/>
+                <button class="btn btn-ghost" style="white-space:nowrap;padding:8px 10px" onclick="addLink()">+ Add</button>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="saveInitiative()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span id="save-btn-label">Save Initiative</span>
+            </button>
+
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /initiatives -->
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA LAYER
+══════════════════════════════════════════ */
+const STORAGE_KEY = 'hr_initiatives_v1';
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+/* ══════════════════════════════════════════
+   NAV
+══════════════════════════════════════════ */
+const pageTitles = {
+  dashboard: 'Dashboard Overview',
+  initiatives: 'Initiatives'
+};
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = pageTitles[id] || id;
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'initiatives') renderList();
+}
+
+function focusForm() {
+  document.getElementById('f-name').focus();
+}
+
+/* ══════════════════════════════════════════
+   STATUS HELPERS
+══════════════════════════════════════════ */
+const STATUS_LABEL = {
+  implemented: 'Implemented',
+  development: 'In Development',
+  canceled: 'Canceled'
+};
+
+const SCHEDULE_LABEL = {
+  'one-time': 'One-time',
+  'weekly': 'Weekly',
+  'monthly': 'Monthly',
+  'bi-annually': 'Bi-annually',
+  'annually': 'Annually'
+};
+
+function badgeHtml(status) {
+  return `<span class="badge badge-${status}"><span class="badge-dot"></span>${STATUS_LABEL[status] || status}</span>`;
+}
+
+/* ══════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════ */
+let pieChartInstance = null;
+let barChartInstance = null;
+
+function renderDashboard() {
+  const data = getData();
+  const total = data.length;
+  const imp = data.filter(d => d.status === 'implemented').length;
+  const dev = data.filter(d => d.status === 'development').length;
+  const can = data.filter(d => d.status === 'canceled').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-implemented').textContent = imp;
+  document.getElementById('stat-development').textContent = dev;
+  document.getElementById('stat-canceled').textContent = can;
+  document.getElementById('stat-implemented-pct').textContent =
+    total ? Math.round((imp / total) * 100) + '% completion rate' : '—';
+
+  /* PIE */
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  if (pieChartInstance) pieChartInstance.destroy();
+  pieChartInstance = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Implemented', 'In Development', 'Canceled'],
+      datasets: [{
+        data: [imp, dev, can],
+        backgroundColor: ['#34c98c', '#4f8ef7', '#e85c5c'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '68%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            font: { family: 'Inter', size: 12 },
+            color: '#4a5a7a',
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw} (${total ? Math.round(ctx.raw / total * 100) : 0}%)`
+          }
+        }
+      }
+    }
+  });
+
+  /* BAR — monthly implemented for current year */
+  const year = new Date().getFullYear();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthCounts = new Array(12).fill(0);
+
+  data.filter(d => d.status === 'implemented' && d.date_implemented).forEach(d => {
+    const dt = new Date(d.date_implemented);
+    if (dt.getFullYear() === year) {
+      monthCounts[dt.getMonth()]++;
+    }
+  });
+
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  if (barChartInstance) barChartInstance.destroy();
+  barChartInstance = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Implemented',
+        data: monthCounts,
+        backgroundColor: 'rgba(79,142,247,0.18)',
+        borderColor: '#4f8ef7',
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false,
+        hoverBackgroundColor: 'rgba(79,142,247,0.32)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} initiative${ctx.raw !== 1 ? 's' : ''}` }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#7080a0', font: { family: 'Inter', size: 11 } },
+          grid: { color: '#eef0f6' }
+        },
+        x: {
+          ticks: { color: '#7080a0', font: { family: 'Inter', size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  /* Recent table (last 6) */
+  const recent = [...data].reverse().slice(0, 6);
+  const wrap = document.getElementById('recent-table-wrap');
+  if (!recent.length) {
+    wrap.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><p>No initiatives yet. Add your first one!</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Initiative</th>
+      <th>Department</th>
+      <th>Status</th>
+      <th>Schedule</th>
+      <th>Date Added</th>
+    </tr></thead>
+    <tbody>
+      ${recent.map(d => `<tr>
+        <td><strong>${esc(d.name)}</strong></td>
+        <td>${esc(d.department || '—')}</td>
+        <td>${badgeHtml(d.status)}</td>
+        <td>${SCHEDULE_LABEL[d.schedule] || d.schedule || '—'}</td>
+        <td>${d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+/* ══════════════════════════════════════════
+   INITIATIVES LIST
+══════════════════════════════════════════ */
+function renderList() {
+  const data = getData();
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const fs = document.getElementById('filter-status').value;
+  const fsch = document.getElementById('filter-schedule').value;
+
+  let filtered = data.filter(d => {
+    const matchQ = !q || d.name.toLowerCase().includes(q) || (d.department || '').toLowerCase().includes(q);
+    const matchS = !fs || d.status === fs;
+    const matchSch = !fsch || d.schedule === fsch;
+    return matchQ && matchS && matchSch;
+  }).reverse();
+
+  const wrap = document.getElementById('initiatives-table-wrap');
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><p>${data.length ? 'No results match your filters.' : 'No initiatives yet. Use the form →'}</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Initiative</th>
+      <th>Dept</th>
+      <th>Status</th>
+      <th>Schedule</th>
+      <th>Implemented</th>
+      <th></th>
+    </tr></thead>
+    <tbody id="initiatives-tbody">
+      ${filtered.map(d => `
+        <tr class="initiative-row" onclick="toggleDetail('${d.id}')">
+          <td><strong>${esc(d.name)}</strong></td>
+          <td>${esc(d.department || '—')}</td>
+          <td>${badgeHtml(d.status)}</td>
+          <td>${SCHEDULE_LABEL[d.schedule] || '—'}</td>
+          <td>${d.date_implemented ? fmtDate(d.date_implemented) : '—'}</td>
+          <td>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2" id="chevron-${d.id}"><polyline points="6 9 12 15 18 9"/></svg>
+          </td>
+        </tr>
+        <tr class="initiative-detail-row" id="detail-row-${d.id}">
+          <td colspan="6">
+            <div class="initiative-detail-inner">
+              <div class="detail-grid">
+                <div>
+                  <div class="detail-item-label">Start Date</div>
+                  <div class="detail-item-value">${d.start_date ? fmtDate(d.start_date) : '—'}</div>
+                </div>
+                <div>
+                  <div class="detail-item-label">Date Implemented</div>
+                  <div class="detail-item-value">${d.date_implemented ? fmtDate(d.date_implemented) : '—'}</div>
+                </div>
+                <div>
+                  <div class="detail-item-label">Schedule</div>
+                  <div class="detail-item-value">${SCHEDULE_LABEL[d.schedule] || '—'}</div>
+                </div>
+                <div>
+                  <div class="detail-item-label">Added</div>
+                  <div class="detail-item-value">${d.created_at ? fmtDate(d.created_at) : '—'}</div>
+                </div>
+              </div>
+              ${d.notes ? `<div class="detail-item-label">Notes</div><div class="detail-notes">${esc(d.notes)}</div>` : ''}
+              ${(d.links && d.links.length) ? `<div class="detail-item-label" style="margin-top:10px">Linked Files / URLs</div><div class="detail-links">${d.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">🔗 ${esc(l.label || l.url)}</a>`).join('')}</div>` : ''}
+              <div class="detail-actions">
+                <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();editInitiative('${d.id}')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+                <button class="btn btn-danger" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteInitiative('${d.id}')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>`;
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById('detail-row-' + id);
+  const ch = document.getElementById('chevron-' + id);
+  const isOpen = row.classList.contains('open');
+  // close all
+  document.querySelectorAll('.initiative-detail-row.open').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('[id^=chevron-]').forEach(c => c.style.transform = '');
+  if (!isOpen) {
+    row.classList.add('open');
+    if (ch) ch.style.transform = 'rotate(180deg)';
+  }
+}
+
+/* ══════════════════════════════════════════
+   FORM LINKS
+══════════════════════════════════════════ */
+let formLinks = [];
+let editingId = null;
+
+function addLink() {
+  const urlEl = document.getElementById('f-link-url');
+  const labelEl = document.getElementById('f-link-label');
+  const url = urlEl.value.trim();
+  const label = labelEl.value.trim();
+  if (!url) { toast('Enter a URL to add.', 'error'); return; }
+  formLinks.push({ url, label });
+  urlEl.value = '';
+  labelEl.value = '';
+  renderFormLinks();
+}
+
+function removeLink(i) {
+  formLinks.splice(i, 1);
+  renderFormLinks();
+}
+
+function renderFormLinks() {
+  const el = document.getElementById('file-links-list');
+  if (!formLinks.length) { el.innerHTML = ''; return; }
+  el.innerHTML = formLinks.map((l, i) =>
+    `<div class="added-link">
+      <a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a>
+      <button onclick="removeLink(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+/* ══════════════════════════════════════════
+   SAVE / EDIT / DELETE
+══════════════════════════════════════════ */
+function saveInitiative() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('Initiative name is required.', 'error'); return; }
+
+  const data = getData();
+
+  const entry = {
+    id: editingId || genId(),
+    name,
+    department: document.getElementById('f-department').value.trim(),
+    status: document.getElementById('f-status').value,
+    schedule: document.getElementById('f-schedule').value,
+    date_implemented: document.getElementById('f-date').value || null,
+    start_date: document.getElementById('f-start').value || null,
+    notes: document.getElementById('f-notes').value.trim(),
+    links: [...formLinks],
+    created_at: editingId ? (data.find(d => d.id === editingId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  if (editingId) {
+    const idx = data.findIndex(d => d.id === editingId);
+    if (idx !== -1) data[idx] = entry;
+  } else {
+    data.push(entry);
+  }
+
+  saveData(data);
+  resetForm();
+  renderList();
+  toast(editingId ? 'Initiative updated.' : 'Initiative saved!', 'success');
+  editingId = null;
+}
+
+function editInitiative(id) {
+  const d = getData().find(x => x.id === id);
+  if (!d) return;
+  editingId = id;
+
+  document.getElementById('f-name').value = d.name || '';
+  document.getElementById('f-department').value = d.department || '';
+  document.getElementById('f-status').value = d.status || 'development';
+  document.getElementById('f-schedule').value = d.schedule || 'one-time';
+  document.getElementById('f-date').value = d.date_implemented || '';
+  document.getElementById('f-start').value = d.start_date || '';
+  document.getElementById('f-notes').value = d.notes || '';
+  formLinks = d.links ? [...d.links] : [];
+  renderFormLinks();
+
+  document.getElementById('form-panel-title').textContent = 'Edit Initiative';
+  document.getElementById('save-btn-label').textContent = 'Update Initiative';
+  document.getElementById('form-cancel-btn').style.display = 'inline-flex';
+
+  document.getElementById('initiative-form-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('f-name').focus();
+}
+
+function deleteInitiative(id) {
+  if (!confirm('Delete this initiative? This cannot be undone.')) return;
+  const data = getData().filter(d => d.id !== id);
+  saveData(data);
+  renderList();
+  toast('Initiative deleted.', 'error');
+}
+
+function cancelEdit() {
+  editingId = null;
+  resetForm();
+}
+
+function resetForm() {
+  ['f-name','f-department','f-date','f-start','f-notes','f-link-url','f-link-label'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-status').value = 'development';
+  document.getElementById('f-schedule').value = 'one-time';
+  formLinks = [];
+  renderFormLinks();
+  document.getElementById('form-panel-title').textContent = 'New Initiative';
+  document.getElementById('save-btn-label').textContent = 'Save Initiative';
+  document.getElementById('form-cancel-btn').style.display = 'none';
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  const d = new Date(str);
+  if (isNaN(d)) return str;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function toast(msg, type = '') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.innerHTML = `<span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+renderDashboard();
+</script>
+</body>
+</html>
